@@ -25,8 +25,8 @@ public class Main extends JavaPlugin
         getLogger( ).info( "plugin initializated" );
         SettingsManager.getInstance( ).setup( this );
 
-        RegisteredServiceProvider<Chat> rsp = getServer().getServicesManager().getRegistration(Chat.class);
-        chat = rsp.getProvider();
+        RegisteredServiceProvider< Chat > rsp = getServer( ).getServicesManager( ).getRegistration( Chat.class );
+        chat = rsp.getProvider( );
 
         AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Symbol" );
         GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Symbol" );
