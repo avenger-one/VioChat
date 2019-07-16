@@ -1,5 +1,5 @@
 name: VioChat
-main: space.deniska.Main
+main: space.deniska.VioChat
 version: 1.0.0
 author: violanes
 softdepend:
