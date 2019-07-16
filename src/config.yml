@@ -1,0 +1,11 @@
+Global:
+  Symbol: '!'
+  Template: "%username% &6: %message%"
+  Color: "&6"
+Local:
+  Template: "%username% : %message%"
+  Color: "&f"
+Admin:
+  Symbol: '\'
+  Template: "%prefix%%username%%suffix% &c: %message%"
+  Color: "&c"

@@ -1,0 +1,9 @@
+name: VioChat
+main: space.deniska.Main
+version: 1.0.0
+author: violanes
+softdepend:
+  - Vault
+permissions:
+  viochat.admin:
+    description: allows users to send and recieve messages of admin chat
