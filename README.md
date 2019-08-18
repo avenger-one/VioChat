@@ -5,5 +5,5 @@
 > * Vault ( latest build )
 > * Spigot / bukkit ( 1.8 + )
 
-Big coder: https://github.com/violanes
+Big coder: [violanes](https://github.com/violanes)
 Website: http://deniska.space
