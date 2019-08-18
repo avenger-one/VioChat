@@ -7,10 +7,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.Set;
 
 public class VioChat extends JavaPlugin
 {
@@ -49,12 +48,12 @@ public class VioChat extends JavaPlugin
                     raw = raw.substring( 1 );
                     m_iChatType = 1;
                 }
-                else if ( raw.startsWith( AdminSymbol ) )
+                else if ( raw.startsWith( AdminSymbol ) && e.getPlayer().hasPermission( "viochat.admin" ) )
                 {
                     template = "Admin.Template";
                     m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Color" );
                     raw = raw.substring( 1 );
-                    m_iChatType = ( e.getPlayer( ).hasPermission( "viochat.admin" ) ) ? 2 : 0;
+                    m_iChatType = 2;
                 }
                 else
                     template = "Local.Template";
@@ -62,11 +61,19 @@ public class VioChat extends JavaPlugin
                 m_szColor = m_szColor.replace( "&", "§" );
                 String msg = SettingsManager.getInstance( ).getConfig( ).getString( template );
 
-                for ( Player tempPlayer : e.getRecipients() )
+                for ( Player tempPlayer : e.getRecipients( ) )
                 {
                     String modPlayer = chat.getPlayerPrefix( tempPlayer ) + tempPlayer.getDisplayName( ) + chat.getPlayerSuffix( tempPlayer ) + m_szColor;
-                    raw = raw.replace( tempPlayer.getDisplayName( ), modPlayer );
+
+                    if ( ( raw.startsWith( tempPlayer.getDisplayName( ) + " " )
+                            || raw.endsWith( " " + tempPlayer.getDisplayName( ) )
+                            || raw.contains( " " + tempPlayer.getDisplayName( ) + " " ) )
+                            || raw.equalsIgnoreCase( tempPlayer.getDisplayName( ) ) )
+                        raw = raw.replace( tempPlayer.getDisplayName( ), modPlayer );
                 }
+
+                if ( raw.startsWith( " " ) )
+                    raw = raw.substring( 1 );
 
                 msg = msg.replace( "%username%", e.getPlayer( ).getDisplayName( ) );
                 msg = msg.replace( "%message%", raw );
@@ -82,7 +89,7 @@ public class VioChat extends JavaPlugin
 
                     if ( ( pl.getLocation( ).distance( pLoc ) <= distance && m_iChatType == 0 )
                             || ( m_iChatType == 1 )
-                            || ( m_iChatType == 2 && e.getPlayer( ) .hasPermission( "viochat.admin" ) ) )
+                            || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) ) )
                     {
                         pl.sendMessage( msg );
                     }
