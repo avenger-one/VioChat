@@ -6,4 +6,3 @@
 > * Spigot / bukkit ( 1.8 + )
 
 Big coder: [violanes](https://github.com/violanes)
-Website: http://deniska.space
