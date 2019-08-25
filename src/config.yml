@@ -9,3 +9,7 @@ Admin:
   Symbol: '\'
   Template: "%prefix%%username%%suffix% &c: %message%"
   Color: "&c"
+Private:
+  Symbol: '/'
+  Template: "%prefix%%username%%suffix% &fto %receiver% &2-> %message%"
+  Color: "&2"

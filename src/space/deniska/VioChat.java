@@ -32,14 +32,16 @@ public class VioChat extends JavaPlugin
 
         Bukkit.getPluginManager( ).registerEvents( new Listener( )
         {
-
             @EventHandler
             public void onChatEvent( AsyncPlayerChatEvent e )
             {
+                int m_iChatType = 0;
+
+                Player m_Recipient = e.getPlayer( );
+
                 String raw = e.getMessage( );
                 String template;
-                int m_iChatType = 0;
-                String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Local.Color" );;
+                String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Local.Color" );
 
                 if ( raw.startsWith( GlobalSymbol ) )
                 {
@@ -58,11 +60,31 @@ public class VioChat extends JavaPlugin
                 else
                     template = "Local.Template";
 
-                m_szColor = m_szColor.replace( "&", "§" );
                 String msg = SettingsManager.getInstance( ).getConfig( ).getString( template );
+                m_szColor = m_szColor.replace( "&", "§" );
+
+                if ( raw.startsWith( " " ) )
+                    raw = raw.substring( 1 );
 
                 for ( Player tempPlayer : e.getRecipients( ) )
                 {
+                    if ( raw.startsWith( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Private.Symbol" ) ) && m_iChatType == 0 )
+                    {
+                        if ( tempPlayer == e.getPlayer( ) )
+                            continue;
+
+                        m_Recipient = tempPlayer;
+                        m_iChatType = 3;
+
+                        msg = SettingsManager.getInstance( ).getConfig( ).getString( "Private.Template" );
+                        m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Private.Color" ).replace( "&", "§" );
+
+                        raw = raw.replace( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Private.Symbol" ), "" );
+
+                        if ( raw.startsWith( " " ) )
+                            raw = raw.substring( 1 );
+                    }
+
                     String modPlayer = chat.getPlayerPrefix( tempPlayer ) + tempPlayer.getDisplayName( ) + chat.getPlayerSuffix( tempPlayer ) + m_szColor;
 
                     if ( ( raw.startsWith( tempPlayer.getDisplayName( ) + " " )
@@ -72,10 +94,8 @@ public class VioChat extends JavaPlugin
                         raw = raw.replace( tempPlayer.getDisplayName( ), modPlayer );
                 }
 
-                if ( raw.startsWith( " " ) )
-                    raw = raw.substring( 1 );
-
                 msg = msg.replace( "%username%", e.getPlayer( ).getDisplayName( ) );
+                msg = msg.replace( "%receiver%", chat.getPlayerPrefix( m_Recipient ) + m_Recipient.getDisplayName( ) + chat.getPlayerSuffix( m_Recipient ) );
                 msg = msg.replace( "%message%", raw );
                 msg = msg.replace( "%prefix%", chat.getPlayerPrefix( e.getPlayer( ) ) );
                 msg = msg.replace( "%suffix%", chat.getPlayerSuffix( e.getPlayer( ) ) );
@@ -89,7 +109,8 @@ public class VioChat extends JavaPlugin
 
                     if ( ( pl.getLocation( ).distance( pLoc ) <= distance && m_iChatType == 0 )
                             || ( m_iChatType == 1 )
-                            || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) ) )
+                            || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) )
+                            || ( m_iChatType == 3 && ( pl == m_Recipient || pl == e.getPlayer( ) ) ) )
                     {
                         pl.sendMessage( msg );
                     }
