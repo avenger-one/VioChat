@@ -5,6 +5,7 @@ Global:
 Local:
   Template: "%prefix%%username%%suffix% : %message%"
   Color: "&f"
+  Distance: 100
 Admin:
   Symbol: '\'
   Template: "%prefix%%username%%suffix% &c: %message%"

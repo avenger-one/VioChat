@@ -8,3 +8,7 @@ permissions:
   viochat.admin:
     description: allows users to use admin chat
     default: false
+commands:
+  chatblock:
+    description: blocks chat for some events
+    permission: viochat.admin

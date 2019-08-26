@@ -2,12 +2,12 @@ package space.deniska;
 
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -17,6 +17,7 @@ public class VioChat extends JavaPlugin
     private static String AdminSymbol = "@";
     private static String GlobalSymbol = "!";
     private static Chat chat = null;
+    private static boolean g_bChatBlocked = false;
 
     @Override
     public void onEnable( )
@@ -30,6 +31,26 @@ public class VioChat extends JavaPlugin
         AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Symbol" );
         GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Symbol" );
 
+        getCommand( "chatblock" ).setExecutor( ( commandSender, command, s, args ) ->
+        {
+            if ( !commandSender.hasPermission( "viochat.admin" ) )
+            {
+                commandSender.sendMessage(ChatColor.RED + "Нет прав");
+                return true;
+            }
+
+            if ( args.length != 0 )
+            {
+                commandSender.sendMessage( ChatColor.RED + "Неверное количество аргументов" );
+                return true;
+            }
+
+            g_bChatBlocked = !g_bChatBlocked;
+            commandSender.sendMessage( ChatColor.GREEN + ( ( g_bChatBlocked ) ? "Чат заблокирован" : "Чат разблокирован" ) );
+
+            return true;
+        });
+
         Bukkit.getPluginManager( ).registerEvents( new Listener( )
         {
             @EventHandler
@@ -42,6 +63,13 @@ public class VioChat extends JavaPlugin
                 String raw = e.getMessage( );
                 String template;
                 String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Local.Color" );
+
+                if ( g_bChatBlocked && !e.getPlayer( ).hasPermission( "viochat.admin" ) )
+                {
+                    e.getPlayer( ).sendMessage( ChatColor.RED + "Чат заблокирован. Возможно, на сервере проводится ивент!" );
+                    e.setCancelled( true );
+                    return;
+                }
 
                 if ( raw.startsWith( GlobalSymbol ) )
                 {
@@ -101,13 +129,14 @@ public class VioChat extends JavaPlugin
                 msg = msg.replace( "%suffix%", chat.getPlayerSuffix( e.getPlayer( ) ) );
                 msg = msg.replace( "&", "§" );
 
-                int distance = 100;
                 Location pLoc = e.getPlayer( ).getLocation( );
+
+                int m_iDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Local.Distance" );
 
                 for ( Player pl : e.getRecipients( ) )
                 {
 
-                    if ( ( pl.getLocation( ).distance( pLoc ) <= distance && m_iChatType == 0 )
+                    if ( ( pl.getLocation( ).distance( pLoc ) <= m_iDistance && m_iChatType == 0 )
                             || ( m_iChatType == 1 )
                             || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) )
                             || ( m_iChatType == 3 && ( pl == m_Recipient || pl == e.getPlayer( ) ) ) )
