@@ -1,16 +1,22 @@
-Global:
-  Symbol: '!'
-  Template: "%prefix%%username%%suffix% &6: %message%"
-  Color: "&6"
-Local:
-  Template: "%prefix%%username%%suffix% : %message%"
-  Color: "&f"
-  Distance: 100
-Admin:
-  Symbol: '\'
-  Template: "%prefix%%username%%suffix% &c: %message%"
-  Color: "&c"
-Private:
-  Symbol: '/'
-  Template: "%prefix%%username%%suffix% &fto %receiver% &2-> %message%"
-  Color: "&2"
+Chats:
+  Global:
+    Symbol: '!'
+    Template: "%prefix%%username%%suffix% &6: %message%"
+    Color: "&6"
+  Local:
+    Template: "%prefix%%username%%suffix% &f: %message%"
+    Color: "&f"
+    Distance: 100
+  Admin:
+    Symbol: '\'
+    Template: "%prefix%%username%%suffix% &c: %message%"
+    Color: "&c"
+  Private:
+    Symbol: '/'
+    Template: "%prefix%%username%%suffix% &fto %receiver% &2-> %message%"
+    Color: "&2"
+  Roleplay:
+    Symbol: '*'
+    Template: "%prefix%%username%%suffix% &a* %message% *"
+    Color: "&a"
+    Distance: 150

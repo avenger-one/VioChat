@@ -16,6 +16,7 @@ public class VioChat extends JavaPlugin
 
     private static String AdminSymbol = "@";
     private static String GlobalSymbol = "!";
+    private static String RPSymbol = "*";
     private static Chat chat = null;
     private static boolean g_bChatBlocked = false;
 
@@ -28,8 +29,9 @@ public class VioChat extends JavaPlugin
         RegisteredServiceProvider< Chat > rsp = getServer( ).getServicesManager( ).getRegistration( Chat.class );
         chat = rsp.getProvider( );
 
-        AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Symbol" );
-        GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Symbol" );
+        AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Admin.Symbol" );
+        GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Global.Symbol" );
+        RPSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Roleplay.Symbol" );
 
         getCommand( "chatblock" ).setExecutor( ( commandSender, command, s, args ) ->
         {
@@ -62,7 +64,7 @@ public class VioChat extends JavaPlugin
 
                 String raw = e.getMessage( );
                 String template;
-                String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Local.Color" );
+                String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Local.Color" );
 
                 if ( g_bChatBlocked && !e.getPlayer( ).hasPermission( "viochat.admin" ) )
                 {
@@ -73,20 +75,29 @@ public class VioChat extends JavaPlugin
 
                 if ( raw.startsWith( GlobalSymbol ) )
                 {
-                    template = "Global.Template";
-                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Color" );
-                    raw = raw.substring( 1 );
+                    template = "Chats.Global.Template";
+                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Global.Color" );
+                    raw = raw.substring( GlobalSymbol.length( ) );
                     m_iChatType = 1;
                 }
                 else if ( raw.startsWith( AdminSymbol ) && e.getPlayer().hasPermission( "viochat.admin" ) )
                 {
-                    template = "Admin.Template";
-                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Color" );
-                    raw = raw.substring( 1 );
+                    template = "Chats.Admin.Template";
+                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Admin.Color" );
+                    raw = raw.substring( AdminSymbol.length( ) );
                     m_iChatType = 2;
                 }
+                else if ( raw.startsWith( RPSymbol ) )
+                {
+                    template = "Chats.Roleplay.Template";
+                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Roleplay.Color" );
+                    m_iChatType = 4;
+                    raw = raw.substring( RPSymbol.length( ) );
+                }
                 else
-                    template = "Local.Template";
+                {
+                    template = "Chats.Local.Template";
+                }
 
                 String msg = SettingsManager.getInstance( ).getConfig( ).getString( template );
                 m_szColor = m_szColor.replace( "&", "§" );
@@ -96,7 +107,7 @@ public class VioChat extends JavaPlugin
 
                 for ( Player tempPlayer : e.getRecipients( ) )
                 {
-                    if ( raw.startsWith( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Private.Symbol" ) ) && m_iChatType == 0 )
+                    if ( raw.startsWith( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Symbol" ) ) && m_iChatType == 0 )
                     {
                         if ( tempPlayer == e.getPlayer( ) )
                             continue;
@@ -104,10 +115,10 @@ public class VioChat extends JavaPlugin
                         m_Recipient = tempPlayer;
                         m_iChatType = 3;
 
-                        msg = SettingsManager.getInstance( ).getConfig( ).getString( "Private.Template" );
-                        m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Private.Color" ).replace( "&", "§" );
+                        msg = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Template" );
+                        m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Color" ).replace( "&", "§" );
 
-                        raw = raw.replace( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Private.Symbol" ), "" );
+                        raw = raw.replace( tempPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Symbol" ), "" );
 
                         if ( raw.startsWith( " " ) )
                             raw = raw.substring( 1 );
@@ -131,12 +142,11 @@ public class VioChat extends JavaPlugin
 
                 Location pLoc = e.getPlayer( ).getLocation( );
 
-                int m_iDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Local.Distance" );
+                int m_iDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats." + ( ( m_iChatType == 4 ) ? "Roleplay" : "Local" ) + ".Distance" );
 
                 for ( Player pl : e.getRecipients( ) )
                 {
-
-                    if ( ( pl.getLocation( ).distance( pLoc ) <= m_iDistance && m_iChatType == 0 )
+                    if ( ( pl.getLocation( ).distance( pLoc ) <= m_iDistance && ( m_iChatType == 0 || m_iChatType == 4 ) )
                             || ( m_iChatType == 1 )
                             || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) )
                             || ( m_iChatType == 3 && ( pl == m_Recipient || pl == e.getPlayer( ) ) ) )
