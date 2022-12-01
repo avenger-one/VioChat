@@ -8,6 +8,9 @@ permissions:
   viochat.admin:
     description: allows users to use admin chat
     default: false
+  viochat.color:
+    description: allows users to use color formatting in their messages
+    default: false
 commands:
   chatblock:
     description: blocks chat for some events
