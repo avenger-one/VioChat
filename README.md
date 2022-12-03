@@ -1,12 +1,13 @@
 # VioChat
-VioChat - simple minecraft plugin for chatting in 3 different channels: local ( 100 blocks ), global and admin ( special permission required ). Displays prefixes, suffixes and whatever you want. 
+VioChat - simple lightweight minecraft 1.8+ chat utility (server plugin). 
 
-##### features
+#### features
 - local chat (defaults to 100 blocks radius)
 - roleplay chat
 - admin chat
 - global chat
-- private chat
+- private chat (p2p)
+- automatic messaging
 
 [DOWNLOAD](https://github.com/violanes/VioChat/blob/master/VioChat.jar?raw=true)
 
