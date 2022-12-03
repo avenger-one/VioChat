@@ -22,7 +22,11 @@ public class VioChat extends JavaPlugin
     private static String GlobalSymbol = "!";
     private static String RPSymbol = "*";
     private static boolean g_bChatBlocked = false;
-    static Chat m_Chat = null;
+    private static Chat m_Chat = null;
+
+    private int m_iLocalDistance = 0;
+    private int m_iRoleplayDistance = 0;
+
     @Override
     public void onEnable( )
     {
@@ -35,6 +39,9 @@ public class VioChat extends JavaPlugin
         AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Admin.Symbol" );
         GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Global.Symbol" );
         RPSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Roleplay.Symbol" );
+
+        m_iLocalDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats.Local.Distance" );
+        m_iRoleplayDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats.Roleplay.Distance" );
 
         getCommand( "chatblock" ).setExecutor( ( commandSender, command, s, args ) ->
         {
@@ -178,17 +185,14 @@ public class VioChat extends JavaPlugin
                 final World LocalWorld = pActor.getLocation( ).getWorld( );
                 final Iterator< Player > aRecipients = pEvent.getRecipients( ).iterator( );
 
-                int iDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats." + ( ( iChatMode == 4 )
-                        ? "Roleplay" : "Local" ) + ".Distance" );
-
                 while ( aRecipients.hasNext( ) )
                 {
                     final Player pIteratedPlayer = aRecipients.next( );
                     if ( pIteratedPlayer == pActor )
                         continue;
 
-                    if ( pIteratedPlayer.getLocation( ).getWorld( ) == LocalWorld
-                            && pActor.getLocation( ).distance( pIteratedPlayer.getLocation( ) ) <= iDistance )
+                    if ( pIteratedPlayer.getLocation( ).getWorld( ) == LocalWorld && pActor.getLocation( ).distance(
+                        pIteratedPlayer.getLocation( ) ) <= ( ( iChatMode == 4 ) ? m_iRoleplayDistance : m_iLocalDistance ) )
                         continue;
 
                     aRecipients.remove( );
