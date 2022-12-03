@@ -11,8 +11,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.Iterator;
+import java.util.List;
 
 public class VioChat extends JavaPlugin
 {
@@ -21,7 +23,6 @@ public class VioChat extends JavaPlugin
     private static String RPSymbol = "*";
     private static boolean g_bChatBlocked = false;
     static Chat m_Chat = null;
-
     @Override
     public void onEnable( )
     {
@@ -55,6 +56,24 @@ public class VioChat extends JavaPlugin
 
             return true;
         } );
+
+        new BukkitRunnable( ) {
+            private int iIndex = 0;
+
+            @Override
+            public void run( ) {
+                List< String > aMessages = SettingsManager.getInstance( ).getConfig( ).getStringList( "Messages.List" );
+                if ( aMessages.isEmpty( ) )
+                    return;
+
+                Bukkit.getServer( ).broadcastMessage( aMessages.get( iIndex ).replace( "&", "§" ) );
+                iIndex++;
+
+                if ( iIndex == aMessages.size( ) )
+                    iIndex = 0;
+            }
+        }.runTaskTimerAsynchronously( this, 0L,
+            SettingsManager.getInstance( ).getConfig( ).getInt( "Messages.Delay" ) );
 
         Bukkit.getPluginManager( ).registerEvents( new Listener( )
         {

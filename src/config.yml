@@ -20,3 +20,8 @@ Chats:
     Template: "%prefix%%username%%suffix% &a* %message% *"
     Color: "&a"
     Distance: 150
+Messages:
+  Delay: 3000
+  List:
+    - '&6sample colored auto message'
+    - '&canother message'
