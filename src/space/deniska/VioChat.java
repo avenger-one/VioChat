@@ -2,21 +2,30 @@ package space.deniska;
 
 import net.milkbowl.vault.chat.Chat;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
-import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
+
+import java.util.Iterator;
+import java.util.List;
 
 public class VioChat extends JavaPlugin
 {
-
     private static String AdminSymbol = "@";
     private static String GlobalSymbol = "!";
-    private static Chat chat = null;
+    private static String RPSymbol = "*";
+    private static boolean g_bChatBlocked = false;
+    private static Chat m_Chat = null;
+
+    private int m_iLocalDistance = 0;
+    private int m_iRoleplayDistance = 0;
 
     @Override
     public void onEnable( )
@@ -25,80 +34,170 @@ public class VioChat extends JavaPlugin
         SettingsManager.getInstance( ).setup( this );
 
         RegisteredServiceProvider< Chat > rsp = getServer( ).getServicesManager( ).getRegistration( Chat.class );
-        chat = rsp.getProvider( );
+        m_Chat = rsp.getProvider( );
 
-        AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Symbol" );
-        GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Symbol" );
+        AdminSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Admin.Symbol" );
+        GlobalSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Global.Symbol" );
+        RPSymbol = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Roleplay.Symbol" );
+
+        m_iLocalDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats.Local.Distance" );
+        m_iRoleplayDistance = SettingsManager.getInstance( ).getConfig( ).getInt( "Chats.Roleplay.Distance" );
+
+        getCommand( "chatblock" ).setExecutor( ( commandSender, command, s, args ) ->
+        {
+            if ( !commandSender.hasPermission( "viochat.admin" ) )
+            {
+                commandSender.sendMessage( ChatColor.RED + "No permission" );
+                return true;
+            }
+
+            if ( args.length != 0 )
+            {
+                commandSender.sendMessage( ChatColor.RED + "Invalid arguments" );
+                return true;
+            }
+
+            g_bChatBlocked = !g_bChatBlocked;
+            commandSender.sendMessage( ChatColor.GREEN + ( ( g_bChatBlocked ) ? "Chat was locked"
+                : "Chat was unlocked" ) );
+
+            return true;
+        } );
+
+        new BukkitRunnable( ) {
+            private int iIndex = 0;
+
+            @Override
+            public void run( ) {
+                List< String > aMessages = SettingsManager.getInstance( ).getConfig( ).getStringList( "Messages.List" );
+                if ( aMessages.isEmpty( ) )
+                    return;
+
+                Bukkit.getServer( ).broadcastMessage( aMessages.get( iIndex ).replace( "&", "§" ) );
+                iIndex++;
+
+                if ( iIndex == aMessages.size( ) )
+                    iIndex = 0;
+            }
+        }.runTaskTimerAsynchronously( this, 0L,
+            SettingsManager.getInstance( ).getConfig( ).getInt( "Messages.Delay" ) );
 
         Bukkit.getPluginManager( ).registerEvents( new Listener( )
         {
-
-            @EventHandler
-            public void onChatEvent( AsyncPlayerChatEvent e )
+            @EventHandler( priority = EventPriority.HIGHEST )
+            public void onPlayerChat( AsyncPlayerChatEvent pEvent )
             {
-                String raw = e.getMessage( );
-                String template;
-                int m_iChatType = 0;
-                String m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Local.Color" );;
+                if ( pEvent.isCancelled( ) )
+                    return;
 
-                if ( raw.startsWith( GlobalSymbol ) )
+                final Player pActor = pEvent.getPlayer( );
+                if ( pActor == null )
                 {
-                    template = "Global.Template";
-                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Global.Color" );
-                    raw = raw.substring( 1 );
-                    m_iChatType = 1;
+                    pEvent.setCancelled( true );
+                    return;
                 }
-                else if ( raw.startsWith( AdminSymbol ) && e.getPlayer().hasPermission( "viochat.admin" ) )
+
+                String sRaw = pEvent.getMessage( );
+                if ( sRaw.startsWith( " " ) )
+                    sRaw = sRaw.substring( 1 );
+
+                String sColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Local.Color" );
+                String sTemplate;
+                int iChatMode = 0;
+
+                if ( sRaw.startsWith( GlobalSymbol ) )
                 {
-                    template = "Admin.Template";
-                    m_szColor = SettingsManager.getInstance( ).getConfig( ).getString( "Admin.Color" );
-                    raw = raw.substring( 1 );
-                    m_iChatType = 2;
+                    sTemplate = "Chats.Global.Template";
+                    sColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Global.Color" );
+                    sRaw = sRaw.substring( GlobalSymbol.length( ) );
+                    iChatMode = 1;
+                }
+                else if ( sRaw.startsWith( AdminSymbol ) && pActor.hasPermission( "viochat.admin" ) )
+                {
+                    sTemplate = "Chats.Admin.Template";
+                    sColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Admin.Color" );
+                    sRaw = sRaw.substring( AdminSymbol.length( ) );
+                    iChatMode = 2;
+                }
+                else if ( sRaw.startsWith( RPSymbol ) )
+                {
+                    sTemplate = "Chats.Roleplay.Template";
+                    sColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Roleplay.Color" );
+                    iChatMode = 4;
+                    sRaw = sRaw.substring( RPSymbol.length( ) );
                 }
                 else
-                    template = "Local.Template";
-
-                m_szColor = m_szColor.replace( "&", "§" );
-                String msg = SettingsManager.getInstance( ).getConfig( ).getString( template );
-
-                for ( Player tempPlayer : e.getRecipients( ) )
                 {
-                    String modPlayer = chat.getPlayerPrefix( tempPlayer ) + tempPlayer.getDisplayName( ) + chat.getPlayerSuffix( tempPlayer ) + m_szColor;
-
-                    if ( ( raw.startsWith( tempPlayer.getDisplayName( ) + " " )
-                            || raw.endsWith( " " + tempPlayer.getDisplayName( ) )
-                            || raw.contains( " " + tempPlayer.getDisplayName( ) + " " ) )
-                            || raw.equalsIgnoreCase( tempPlayer.getDisplayName( ) ) )
-                        raw = raw.replace( tempPlayer.getDisplayName( ), modPlayer );
+                    sTemplate = "Chats.Local.Template";
                 }
 
-                if ( raw.startsWith( " " ) )
-                    raw = raw.substring( 1 );
+                String sMessage = SettingsManager.getInstance( ).getConfig( ).getString( sTemplate );
 
-                msg = msg.replace( "%username%", e.getPlayer( ).getDisplayName( ) );
-                msg = msg.replace( "%message%", raw );
-                msg = msg.replace( "%prefix%", chat.getPlayerPrefix( e.getPlayer( ) ) );
-                msg = msg.replace( "%suffix%", chat.getPlayerSuffix( e.getPlayer( ) ) );
-                msg = msg.replace( "&", "§" );
-
-                int distance = 100;
-                Location pLoc = e.getPlayer( ).getLocation( );
-
-                for ( Player pl : e.getRecipients( ) )
+                Player pRecipient = pActor;
+                for ( Player pIteratedPlayer : pEvent.getRecipients( ) )
                 {
-
-                    if ( ( pl.getLocation( ).distance( pLoc ) <= distance && m_iChatType == 0 )
-                            || ( m_iChatType == 1 )
-                            || ( m_iChatType == 2 && pl.hasPermission( "viochat.admin" ) ) )
+                    if ( sRaw.startsWith( pIteratedPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Symbol" ) )
+                            && iChatMode == 0 )
                     {
-                        pl.sendMessage( msg );
+                        if ( pIteratedPlayer == pEvent.getPlayer( ) )
+                            continue;
+
+                        pRecipient = pIteratedPlayer;
+                        iChatMode = 3;
+
+                        sMessage = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Template" );
+                        sColor = SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Color" ).replace( "&", "§" );
+
+                        sRaw = sRaw.replace( pIteratedPlayer.getDisplayName( ) + SettingsManager.getInstance( ).getConfig( ).getString( "Chats.Private.Symbol" ), "" );
+                        if ( sRaw.startsWith( " " ) )
+                            sRaw = sRaw.substring( 1 );
                     }
 
+                    String sMention = m_Chat.getPlayerPrefix( pIteratedPlayer ) + pIteratedPlayer.getDisplayName( ) + m_Chat.getPlayerSuffix( pIteratedPlayer ) + sColor;
+                    if ( ( sRaw.startsWith( pIteratedPlayer.getDisplayName( ) + " " )
+                            || sRaw.endsWith( " " + pIteratedPlayer.getDisplayName( ) )
+                            || sRaw.contains( " " + pIteratedPlayer.getDisplayName( ) + " " ) )
+                            || sRaw.equalsIgnoreCase( pIteratedPlayer.getDisplayName( ) ) )
+                    {
+                        sRaw = sRaw.replace( pIteratedPlayer.getDisplayName( ), sMention );
+                    }
                 }
 
-                e.getRecipients( ).clear( );
-            }
+                while ( sRaw.startsWith( " " ) )
+                    sRaw = sRaw.substring( 1 );
 
+                if ( !pActor.hasPermission( "viochat.color" ) )
+                    sRaw = sRaw.replaceAll( "&.", "" );
+
+                sMessage = sMessage.replace( "%username%", pActor.getDisplayName( ) );
+                sMessage = sMessage.replace( "%receiver%", m_Chat.getPlayerPrefix( pRecipient )
+                        + pRecipient.getDisplayName( ) + m_Chat.getPlayerSuffix( pRecipient ) );
+                sMessage = sMessage.replace( "%message%", sRaw );
+                sMessage = sMessage.replace( "%prefix%", m_Chat.getPlayerPrefix( pActor ) );
+                sMessage = sMessage.replace( "%suffix%", m_Chat.getPlayerSuffix( pActor ) );
+                sMessage = sMessage.replace( "&", "§" );
+
+                pEvent.setFormat( sMessage );
+
+                if ( iChatMode != 0 && iChatMode != 4 )
+                    return;
+
+                final World LocalWorld = pActor.getLocation( ).getWorld( );
+                final Iterator< Player > aRecipients = pEvent.getRecipients( ).iterator( );
+
+                while ( aRecipients.hasNext( ) )
+                {
+                    final Player pIteratedPlayer = aRecipients.next( );
+                    if ( pIteratedPlayer == pActor )
+                        continue;
+
+                    if ( pIteratedPlayer.getLocation( ).getWorld( ) == LocalWorld && pActor.getLocation( ).distance(
+                        pIteratedPlayer.getLocation( ) ) <= ( ( iChatMode == 4 ) ? m_iRoleplayDistance : m_iLocalDistance ) )
+                        continue;
+
+                    aRecipients.remove( );
+                }
+            }
         }, this );
     }
 

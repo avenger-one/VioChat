@@ -1,6 +1,6 @@
 name: VioChat
 main: space.deniska.VioChat
-version: 1.1.0
+version: 1.2.0
 author: violanes
 softdepend:
   - Vault
@@ -8,3 +8,10 @@ permissions:
   viochat.admin:
     description: allows users to use admin chat
     default: false
+  viochat.color:
+    description: allows users to use color formatting in their messages
+    default: false
+commands:
+  chatblock:
+    description: blocks chat for some events
+    permission: viochat.admin
